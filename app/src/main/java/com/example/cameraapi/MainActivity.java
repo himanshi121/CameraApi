@@ -55,9 +55,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 //import java.text.SimpleDateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 //import java.util.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -71,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
     //private String TAG = "InternalStorageActivity";
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
+    public static final int MEDIA_TYPE_IMAGE = 1;
+    public static final int MEDIA_TYPE_VIDEO = 2;
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
@@ -265,11 +268,9 @@ public class MainActivity extends AppCompatActivity {
     private void takePicture() throws CameraAccessException {
         if (cameraDevice == null) {
             return;
-
         }
 
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-
 
         CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
         Size[] jpegSizes = null;
@@ -299,8 +300,6 @@ public class MainActivity extends AppCompatActivity {
 
         Long tsLong = System.currentTimeMillis() / 1000;
         String ts = tsLong.toString();
-
-        file = new File(Environment.getExternalStorageDirectory() + "/" + ts + ".jpg");
 
         ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
@@ -364,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
     private void save(byte[] bytes) throws IOException {
         OutputStream outputStream = null;
 
-        outputStream = new FileOutputStream(file);
+        outputStream = new FileOutputStream(getOutputMediaFile(MEDIA_TYPE_IMAGE));
 
         outputStream.write(bytes);
 
@@ -505,6 +504,52 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }*/
+
+
+    /** Create a file Uri for saving an image or video */
+    private Uri getOutputMediaFileUri(int type){
+        return Uri.fromFile(getOutputMediaFile(type));
+    }
+
+    /** Create a File for saving an image or video */
+    private File getOutputMediaFile(int type){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+
+
+        File mediaStorageDir = new File(getExternalFilesDir(
+                Environment.DIRECTORY_PICTURES), ".MyCameraApp");
+
+
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
+            }
+            new File(mediaStorageDir.getPath() + File.separator +
+                    ".nomedia");
+        }
+
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+        if (type == MEDIA_TYPE_IMAGE){
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "IMG_"+ timeStamp + ".jpg");
+        } else if(type == MEDIA_TYPE_VIDEO) {
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
+                    "VID_"+ timeStamp + ".mp4");
+        } else {
+            return null;
+        }
+
+        Log.d("MyCameraApp",mediaFile.getAbsolutePath());
+        return mediaFile;
+    }
 
 }
 
